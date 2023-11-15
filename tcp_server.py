@@ -34,13 +34,13 @@ def on_new_client(clientsocket, addr, devices):
             comando = mensagem_json.get('OPERATION', '')
             dados = mensagem_json.get('DATA', '')
 
-            if tipo_dispositivo == devices[tipo_dispositivo - 1].id and comando != 5:
+            if tipo_dispositivo == devices[tipo_dispositivo - 1].id and comando != 5 or comando != -1:
                 dispositivo = devices[tipo_dispositivo - 1]
                 resposta = dispositivo.processar_comando(comando, dados)
                 print(resposta)
                 clientsocket.send(resposta.encode('utf-8'))
 
-            if comando == 5:
+            if comando == 5 or comando == -1:
                 print('Vai encerrar o socket do cliente {} !'.format(addr[0]))
                 clientsocket.send(str(comando).encode('utf-8'))
                 clientsocket.close()

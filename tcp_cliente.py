@@ -17,6 +17,8 @@ def interface():
             '\nSelecione uma opção: Lâmpada Inteligente (1)\nAr Condicionado (2)\nSair (3): '))
         if isinstance(flag, int) and flag in [1, 2, 3]:
             break
+        if flag == 3:
+            return [-1, -1, -1]
 
     if flag == 1:
         while True:
@@ -28,7 +30,7 @@ def interface():
             data_input = str(input('\nDefina a cor da lâmpada: '))
             return [1, lamp_flag, data_input]
         return [1, lamp_flag, None]
-    else:
+    elif flag == 2:
         while True:
             ac_flag = int(input(
                 '\nLigar o Ar Condicionado: (1)\nDesligar o Ar Condicionado: (2)\nDefinir temperatura do ar: (3)\nListar configuração atual (4)\nSair(5): '))

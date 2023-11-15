@@ -127,6 +127,7 @@ class ArCondicionado:
         self.temperatura = 22  # temperatura inicial
         self.status = False
         self.id = 2
+        self.allowed_range = range(15, 30)
 
     def processar_comando(self, comando, data):
         verificar_e_criar_arquivo_csv()
@@ -134,34 +135,17 @@ class ArCondicionado:
             with open('devices.csv', mode='r') as file:
                 content = csv.DictReader(file)
                 rows = list(content)
-                # for row in rows:
-                #     print(row['device_id'])
-                #     # se nao tiver linha com id de dispositivo = 2, cria um com as configurações padrões
-                #     if not row['device_id'] == self.id:
-                #         default_row = {'\n\ndevice_id': str(self.id), 'status': str(
-                #             self.status), 'modification_spec': '', 'current_config': str(self.temperatura)}
-                #         rows.append(default_row)
 
-                #         with open('devices.csv', mode='a', newline='') as file:
-                #             writer = csv.DictWriter(
-                #                 file, fieldnames=default_row.keys())
-                #             writer.writerow(default_row)
-                #             return ('Dispositivo foi inicializado com as configurações padrões: ' + str(default_row))
-                #     # se existir, pega a ultima configuração
-                #     self.temperatura = row['current_config']
-                #     if row['device_id'] != self.id:
-                #         continue
-                #     self.status = row['status']
-                # se o arquivo estiver vazio, adiciona uma linha com as configurações atuais do dispositivo
+                if not rows or not any(row['device_id'] == '2' for row in rows):
+                    return self.inicializar_dispositivo(self.id, self.status, self.temperatura)
+                # Se o dispositivo com id=2 já existe, verifique o status e atualize conforme necessário
                 for row in rows:
-                    if not row['device_id'] == self.id:
-                        return self.inicializar_dispositivo(
-                            self.id, self.status, self.temperatura)
-                if row['status'] == 'True':
-                    return ('Ar Condicionado já está ligado! Temperatura atual: ' + row['current_config'])
-                self.status = True
-                self.update_csv('')
-                return ('Ar Condicionado ligado com a temperatura: ' + row['current_config'])
+                    if int(row['device_id']) == self.id:
+                        if row['status'] == 'True':
+                            return f'Ar Condicionado já está ligado! Temperatura atual: {row["current_config"]}'
+                        self.status = True
+                        self.update_csv('')
+                        return f'Ar Condicionado ligado com a temperatura: {row["current_config"]}'
 
         elif comando == 2:
             with open('devices.csv', mode='r') as file:
@@ -169,15 +153,14 @@ class ArCondicionado:
                 rows = list(content)
 
                 # se o arquivo estiver vazio, adiciona uma linha com as configurações atuais do dispositivo
+                if not rows or not any(row['device_id'] == '2' for row in rows):
+                    return self.inicializar_dispositivo(
+                        self.id, self.status, self.temperatura)
                 for row in rows:
-                    if not row['device_id'] == self.id:
-                        return self.inicializar_dispositivo(
-                            self.id, self.status, self.temperatura)
-                for row in content:
                     if int(row['device_id']) != self.id:
                         continue
                     self.status = row['status']
-                if row['status'] == False:
+                if row['status'] == 'False':
                     return 'Ar Condicionado já está desligado!'
                 self.status = False
                 self.update_csv('')
@@ -189,20 +172,19 @@ class ArCondicionado:
                 rows = list(content)
 
                 # se o arquivo estiver vazio, adiciona uma linha com as configurações atuais do dispositivo
+                if not rows or not any(row['device_id'] == '2' for row in rows):
+                    return self.inicializar_dispositivo(
+                        self.id, self.status, self.temperatura)
                 for row in rows:
-                    if not row['device_id'] == self.id:
-                        return self.inicializar_dispositivo(
-                            self.id, self.status, self.temperatura)
-                for row in content:
                     if int(row['device_id']) != self.id:
                         continue
                     if row['status'] == 'False':
                         return 'Não foi possível alterar a temperatura do ar condicionado! Ele está desligado!'
-                    if row['current_config'] == data.lower():
+                    if row['current_config'] == int(data):
                         return 'Temperatura selecionada já está ativa!'
-                if data.lower() in self.allowed_colors:
-                    self.color = data.lower()
-                    self.update_csv(data.lower())
+                if int(data) in self.allowed_range:
+                    self.temperatura = data
+                    self.update_csv(data)
                     return ('Temperatura alterada para ' + self.temperatura + ' com sucesso!')
                 else:
                     return 'Temperatura inválida, por favor tente novamente!'
@@ -213,7 +195,7 @@ class ArCondicionado:
 
                 # se o arquivo estiver vazio, adiciona uma linha com as configurações atuais do dispositivo
                 for row in rows:
-                    if not row['device_id'] == self.id:
+                    if row['device_id'] != len(rows) != 2:
                         return self.inicializar_dispositivo(
                             self.id, self.status, self.temperatura)
 
@@ -233,7 +215,7 @@ class ArCondicionado:
                 row['device_id'] = self.id
                 row['status'] = str(self.status)
                 row['modification_spec'] = modification_spec
-                row['last_modification'] = self.temperatura
+                row['current_config'] = self.temperatura
 
         with open('devices.csv', mode='w', newline='') as file:
             fieldnames = ['device_id', 'status',

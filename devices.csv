@@ -1,3 +1,3 @@
 device_id,status,modification_spec,current_config
-1,True,green,green
-
+1,True,,white
+2,True,21,21
