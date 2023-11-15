@@ -1,3 +1,2 @@
-device_id,status,modification_spec,current_config
-1,True,,white
-2,True,21,21
+device_id,status,modification_spec,current_config,ip
+1,True,,white,192.168.88.114

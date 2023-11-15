@@ -5,10 +5,16 @@ import socket
 import sys
 import json
 
-
 HOST = '127.0.0.1'  # endereço IP
 PORT = 20000        # Porta utilizada pelo servidor
 BUFFER_SIZE = 1024  # tamanho do buffer para recepção dos dados
+
+
+def user_interface():
+    login = str(input('Usuário: '))
+    senha = str(input('Senha: '))
+
+    return login, senha
 
 
 def interface():
@@ -49,10 +55,14 @@ def main(argv):
             print("Cliente conectado ao servidor!")
 
             while True:
+                user_data = user_interface()
                 flag = interface()
                 my_obj = {'DEVICE': flag[0],
                           "OPERATION": flag[1],
-                          "DATA": flag[2]}
+                          "DATA": flag[2],
+                          "CLIENT_LOGIN": user_data[0],
+                          "CLIENT_PASS": user_data[1]
+                          }
 
                 json_string = json.dumps(my_obj)
 
