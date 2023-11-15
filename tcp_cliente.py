@@ -14,29 +14,29 @@ BUFFER_SIZE = 1024  # tamanho do buffer para recepção dos dados
 def interface():
     while True:
         flag = int(input(
-            'Selecione uma opção: Lâmpada Inteligente (1) Ar Condicionado (2) Sair (3): '))
+            '\nSelecione uma opção: Lâmpada Inteligente (1)\nAr Condicionado (2)\nSair (3): '))
         if isinstance(flag, int) and flag in [1, 2, 3]:
             break
 
     if flag == 1:
         while True:
             lamp_flag = int(input(
-                'Ligar lâmpada (1)\nDesligar lâmpada (2)\nMudar cor de lâmpada (3)\nListar configuração atual (4)\nSair (5): '))
+                '\nLigar lâmpada (1)\nDesligar lâmpada (2)\nMudar cor de lâmpada (3)\nListar configuração atual (4)\nSair (5): '))
             if isinstance(lamp_flag, int) and lamp_flag in [1, 2, 3, 4]:
                 break
-            if lamp_flag == 3:
-                data_input = str(input('Defina a cor da lâmpada: '))
-                return [1, lamp_flag, data_input]
+        if lamp_flag == 3:
+            data_input = str(input('\nDefina a cor da lâmpada: '))
+            return [1, lamp_flag, data_input]
         return [1, lamp_flag, None]
     else:
         while True:
             ac_flag = int(input(
-                'Ligar o Ar Condicionado: (1)\nDesligar o Ar Condicionado: (2)\nDefinir temperatura do ar: (3)\nListar configuração atual (4)\nSair(5): '))
+                '\nLigar o Ar Condicionado: (1)\nDesligar o Ar Condicionado: (2)\nDefinir temperatura do ar: (3)\nListar configuração atual (4)\nSair(5): '))
             if isinstance(ac_flag, int) and ac_flag in [1, 2, 3, 4]:
                 break
-            if ac_flag == 3:
-                data_input = str(input('Defina a temperatura do ar: '))
-                return [2, ac_flag, data_input]
+        if ac_flag == 3:
+            data_input = str(input('Defina a temperatura do ar: '))
+            return [2, ac_flag, data_input]
         return [2, ac_flag, None]
 
 
@@ -57,12 +57,9 @@ def main(argv):
                 # flag.encode - converte a string para bytes
                 s.send(json_string.encode())
                 data = s.recv(BUFFER_SIZE)
-                # converte de bytes para um formato "printável"
-                # texto_recebido = repr(data)
-                # print('Recebido do servidor: ', texto_recebido)
-                # converte os bytes em string
                 texto_string = data.decode('utf-8')
-                print('Recebido do servidor: ', texto_string)
+
+                print('\nRecebido do servidor: ', texto_string)
 
                 if texto_string == '5':
                     print('O servidor encerrou a conexão!')
