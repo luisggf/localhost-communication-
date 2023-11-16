@@ -1,2 +1,6 @@
-device_id,status,modification_spec,current_config,ip
-1,True,,white,192.168.88.114
+device_id,unique_id,status,current_config,ip
+1,16,True,azul,192.168.185.168
+1,15,True,white,192.168.185.168
+1,2,False,white,192.168.227.108
+1,7,True,white,192.168.110.81
+1,14,True,white,192.168.110.81

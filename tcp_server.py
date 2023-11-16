@@ -8,33 +8,11 @@ from threading import Thread
 import json
 from smart_devices import *
 import csv
+import ast
 
 HOST = '127.0.0.1'  # endereço IP
 PORT = 20000        # Porta utilizada pelo servidor
 BUFFER_SIZE = 1024  # tamanho do buffer para recepção dos dados
-
-
-def cadastrar_dispositivo(self, tipo, configuracoes, endereco_ip):
-    with open('devices.csv', mode='a', newline='') as file:
-        writer = csv.DictWriter(file, fieldnames=[
-                                'device_id', 'status', 'modification_spec', 'current_config', 'ip'])
-
-        # Verifica se o dispositivo já está cadastrado
-        with open('devices.csv', mode='r') as read_file:
-            content = csv.DictReader(read_file)
-            for row in content:
-                if row['ip'] == endereco_ip:
-                    return f'Dispositivo já cadastrado com IP: {endereco_ip}'
-        # Se não estiver cadastrado, adiciona uma nova linha no CSV
-        device_id = len(list(content)) + 1
-        default_status = False
-        default_modification_spec = ''
-        default_current_config = configuracoes.get('default_config', '')
-
-        writer.writerow({'device_id': device_id, 'status': default_status, 'modification_spec': default_modification_spec,
-                         'current_config': default_current_config, 'ip': endereco_ip})
-
-        return f'Dispositivo cadastrado com sucesso! ID: {device_id}'
 
 
 def gerar_endereco_ip():
@@ -44,10 +22,50 @@ def gerar_endereco_ip():
     return ip_base.format(octeto3, octeto4)
 
 
-def check_client(user_login, user_pass):
+def check_client(user_login, user_pass, unique_id):
+    ip_to_update = None
+    unique_ids = []
+
+    with open('devices.csv', mode='r') as devices_file:
+        devices_content = list(csv.DictReader(devices_file))
+
+        with open('client.csv', mode='r') as client_file:
+            client_content = list(csv.DictReader(client_file))
+
+            for device_row in devices_content:
+                for client_row in client_content:
+                    if device_row['ip'] == client_row['ip']:
+                        ip_to_update = client_row['ip']
+
+                        # Check if unique_id is not already in the devices_list
+                        if device_row['unique_id'] not in client_row['devices_list']:
+                            unique_ids.append(device_row['unique_id'])
+
+                            # Append the unique_id to the 'devices_list' column
+                            current_devices_list = client_row['devices_list']
+                            if current_devices_list:
+                                current_devices_list += f',{device_row["unique_id"]}'
+                            else:
+                                current_devices_list = device_row["unique_id"]
+                            client_row['devices_list'] = current_devices_list
+
+            if unique_ids:
+                # Update the 'client.csv' file with unique_ids in the 'devices_list' column
+                with open('client.csv', mode='w', newline='') as client_file:
+                    fieldnames = ['user_login',
+                                  'user_pass', 'ip', 'devices_list']
+                    writer = csv.DictWriter(client_file, fieldnames=fieldnames)
+
+                    # Write the header
+                    writer.writeheader()
+
+                    # Write the updated rows
+                    writer.writerows(client_content)
+
+                return ip_to_update
+
     with open('client.csv', mode='r') as file:
         content = csv.DictReader(file)
-
         for row in content:
             if row['user_login'] == user_login and row['user_pass'] == user_pass:
                 return row['ip']
@@ -55,16 +73,37 @@ def check_client(user_login, user_pass):
     # se credenciais não existem gera ip simulando um cliente aleatório
     new_ip = gerar_endereco_ip()
 
-    # Append the new client to the CSV file
     with open('client.csv', mode='a', newline='\n') as file:
-        fieldnames = ['user_login', 'user_pass', 'ip']
+        fieldnames = ['user_login', 'user_pass', 'ip', 'devices_list']
         writer = csv.DictWriter(file, fieldnames=fieldnames)
 
-        # Write the new client to the CSV file
         writer.writerow({'user_login': user_login,
-                        'user_pass': user_pass, 'ip': new_ip})
+                        'user_pass': user_pass, 'ip': new_ip,
+                         'devices_list': unique_id})
 
     return new_ip
+
+
+def get_devices_info_by_ip(ip, client_csv='client.csv', devices_csv='devices.csv'):
+    devices_info = ""
+
+    with open(client_csv, mode='r') as client_file:
+        client_content = csv.DictReader(client_file)
+        client_content = list(client_content)
+
+        for client_row in client_content:
+            if not client_row['devices_list']:
+                client_row['devices_list'] = ''
+            if client_row['ip'] == ip:
+                unique_ids = list(
+                    set(client_row['devices_list'].strip('"').split(",")))
+                with open(devices_csv, mode='r') as devices_file:
+                    devices_content = csv.DictReader(devices_file)
+                    devices_content = list(devices_content)
+                    for device_row in devices_content:
+                        if device_row['unique_id'] in unique_ids:
+                            devices_info += f"Device ID: {device_row['device_id']}, Unique ID: {device_row['unique_id']}, Status: {device_row['status']}, Current Config: {device_row['current_config']}\n"
+    return devices_info
 
 
 def on_new_client(clientsocket, addr, devices):
@@ -85,18 +124,45 @@ def on_new_client(clientsocket, addr, devices):
             except json.JSONDecodeError:
                 mensagem_json = {}
 
-            tipo_dispositivo = mensagem_json.get('DEVICE', '')
-            comando = mensagem_json.get('OPERATION', '')
-            dados = mensagem_json.get('DATA', '')
             user_login = mensagem_json.get('CLIENT_LOGIN', '')
             user_pass = mensagem_json.get('CLIENT_PASS', '')
-            data = mensagem_json.get('CLIENT_DATA', '')
+            client_data = mensagem_json.get('CLIENT_DATA', '')
 
-            ip = check_client(user_login, user_pass)
+            ip = check_client(user_login, user_pass, '')
+
+            message = get_devices_info_by_ip(ip)
+            if not message:
+                message = 'None'
+            try:
+                clientsocket.send(message.encode('utf-8'))
+            except Exception as error:
+                print(error)
+                return
+
+            data = clientsocket.recv(BUFFER_SIZE)
+
+            if not data:
+                break
+
+            try:
+                mensagem_json = json.loads(data)
+            except json.JSONDecodeError:
+                mensagem_json = {}
+
+            # converte os bytes em string
+            texto_recebido = data.decode('utf-8')
+            print('recebido do cliente {} na porta {}: {}'.format(
+                addr[0], addr[1], texto_recebido))
+
+            tipo_dispositivo = mensagem_json.get('DEVICE', '')
+            unique_id = mensagem_json.get('UNIQUE_ID', '')
+            comando = mensagem_json.get('OPERATION', '')
+            dados = mensagem_json.get('DATA', '')
 
             if tipo_dispositivo == devices[tipo_dispositivo - 1].id and comando != 5 or comando != -1:
                 dispositivo = devices[tipo_dispositivo - 1]
-                resposta = dispositivo.processar_comando(comando, dados, ip)
+                resposta = dispositivo.processar_comando(
+                    comando, dados, ip, client_data, unique_id)
                 print(resposta)
                 clientsocket.send(resposta.encode('utf-8'))
 
@@ -107,7 +173,8 @@ def on_new_client(clientsocket, addr, devices):
                 return
 
         except Exception as error:
-            print(tipo_dispositivo, comando, 'Erro: ', error)
+            # print(tipo_dispositivo, comando, 'Erro: ', error)
+            print('Erro: ', error)
             print("Erro na conexão com o cliente!!")
             return
 

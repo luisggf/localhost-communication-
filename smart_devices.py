@@ -1,5 +1,8 @@
 import csv
 import os
+import random
+
+MAX_LAMPS = 16
 
 
 class Lampada:
@@ -16,58 +19,71 @@ class Lampada:
                                'azul', 'ciano',
                                'yellow', 'laranja', 'orange']
 
-    def processar_comando(self, comando, data, ip):
+    def processar_comando(self, comando, data, ip, data_client, unique_id):
         verificar_e_criar_arquivo_csv()
+        if data_client:
+            random_id = random.randint(1, 16)
+            if not self.check_device(self.id, random_id, ip):
+                return ("Dispositivo: " + self.inicializar_dispositivo(self.id, random_id, self.status, self.color, ip) + "criado com sucesso!")
         if comando == 1:
             with open('devices.csv', mode='r') as file:
                 content = csv.DictReader(file)
                 rows = list(content)
+
                 # se o arquivo estiver vazio, adiciona uma linha com as configurações atuais do dispositivo
                 if not rows or not any(ip in row['ip'] for row in rows):
-                    return self.inicializar_dispositivo(self.id, self.status, self.color, ip)
+                    return self.inicializar_dispositivo(self.id, random.randint(1, 16), self.status, self.color, ip)
 
-                for row in content:
-                    if row['device_id'] != 1:
-                        continue
-                    self.status = row['status']
-                if bool(self.status) == True:
+                for row in rows:
+                    if row['device_id'] == self.id and row['ip'] == ip and row['unique_id'] == unique_id:
+                        unique = row['unique_id']
+                        self.status = row['status']
+                if str(self.status) == 'True':
                     return 'Lâmpada já está acesa!'
                 self.status = True
-                self.update_csv('', ip)
-                return f'Lâmpada ligada! IP:{ip}'
+                self.update_csv(ip, unique_id)
+                return f'Lâmpada ligada! IP: {ip}'
+
         elif comando == 2:
             with open('devices.csv', mode='r') as file:
                 content = csv.DictReader(file)
                 rows = list(content)
                 # se o arquivo estiver vazio, adiciona uma linha com as configurações atuais do dispositivo
-                if not rows:
-                    return self.inicializar_dispositivo(self.id, self.status, self.color)
-                for row in content:
-                    if int(row['device_id']) != self.id:
-                        continue
-                    self.status = row['status']
-                if bool(self.status) == False:
+                if not rows or not any(ip in row['ip'] for row in rows):
+                    return self.inicializar_dispositivo(self.id, random.randint(1, 16), self.status, self.color, ip)
+
+                for row in rows:
+                    if row['device_id'] == self.id and row['ip'] == ip and row['unique_id'] == unique_id:
+                        unique = row['unique_id']
+                        self.status = row['status']
+
+                if str(self.status) == 'False':
                     return 'Lâmpada já está desligada!'
                 self.status = False
-                self.update_csv('')
+                self.update_csv(ip, unique_id)
                 return 'Lâmpada desligada!'
+
         elif comando == 3:
             with open('devices.csv', mode='r') as file:
                 content = csv.DictReader(file)
                 rows = list(content)
                 # se o arquivo estiver vazio, adiciona uma linha com as configurações atuais do dispositivo
-                if not rows:
-                    return self.inicializar_dispositivo(self.id, self.status, self.color)
-                for row in content:
-                    if int(row['device_id']) != self.id:
-                        continue
-                    if row['status'] == 'False':
-                        return 'Não foi possível alterar a cor da lâmpada, ela está desligada!'
-                    if row['current_config'] == data.lower():
-                        return 'Cor selecionada já está ativa!'
+                if not rows or not any(ip in row['ip'] for row in rows):
+                    return self.inicializar_dispositivo(self.id, random.randint(1, 16), self.status, self.color, ip)
+
+                for row in rows:
+                    if row['device_id'] == self.id and row['ip'] == ip and row['unique_id'] == unique_id:
+                        unique = row['unique_id']
+                        self.status = row['status']
+                        self.color = row['current_config']
+
+                if self.status == 'False':
+                    return 'Não foi possível alterar a cor da lâmpada, ela está desligada!'
+                if self.color == data.lower():
+                    return 'Cor selecionada já está ativa!'
                 if data.lower() in self.allowed_colors:
                     self.color = data.lower()
-                    self.update_csv(data.lower())
+                    self.update_csv(ip, unique_id)
                     return ('Cor alterada para ' + self.color + ' com sucesso!')
                 else:
                     return 'Cor inválida, por favor tente novamente!'
@@ -78,42 +94,52 @@ class Lampada:
                 rows = list(content)
 
                 # se o arquivo estiver vazio, adiciona uma linha com as configurações atuais do dispositivo
-                if not rows:
-                    return self.inicializar_dispositivo(self.id, self.status, self.color)
+                if not rows or not any(ip in row['ip'] for row in rows):
+                    return self.inicializar_dispositivo(self.id, random.randint(1, 16), self.status, self.color, ip)
 
                 for row in rows:
-                    if int(row['device_id']) == self.id:
-                        return 'Dispositivo: ' + str(row)
+                    if row['device_id'] == self.id and row['ip'] == ip and row['unique_id'] == unique_id:
+                        return ('Dispositivo' + str(row))
         else:
             return 'Comando inválido para a lâmpada!'
 
-    def update_csv(self, modification_spec, ip):
+    def check_device(self, id, unique_id, ip):
+        with open('devices.csv', mode='r') as file:
+            content = csv.DictReader(file)
+            rows = list(content)
+
+            for row in rows:
+                if row['device_id'] == id and row['unique_id'] == unique_id and row['ip'] == ip:
+                    return True
+
+            return False
+
+    def update_csv(self, ip, unique_id):
         with open('devices.csv', mode='r') as file:
             reader = csv.DictReader(file)
             rows = list(reader)
 
         for row in rows:
-            if int(row['device_id']) == self.id:
+            if int(row['device_id']) == self.id and int(row['unique_id'] == unique_id):
                 row['device_id'] = self.id
                 row['status'] = str(self.status)
-                row['modification_spec'] = modification_spec
                 row['current_config'] = self.color
                 row['ip'] = ip
 
         with open('devices.csv', mode='w', newline='') as file:
-            fieldnames = ['device_id', 'status',
-                          'modification_spec', 'current_config', 'ip']
+            fieldnames = ['device_id', 'unique_id', 'status',
+                          'current_config', 'ip']
             writer = csv.DictWriter(file, fieldnames=fieldnames)
             writer.writeheader()
             writer.writerows(rows)
 
-    def inicializar_dispositivo(self, device_id, default_status, default_color, ip):
+    def inicializar_dispositivo(self, device_id, unique_id, default_status, default_color, ip):
         with open('devices.csv', mode='r') as file:
             reader = csv.DictReader(file)
             rows = list(reader)
 
-            default_row = {'device_id': str(device_id), 'status': str(default_status),
-                           'modification_spec': '', 'current_config': str(default_color), 'ip': str(ip)}
+            default_row = {'device_id': str(device_id), 'unique_id': str(unique_id), 'status': str(default_status),
+                           'current_config': str(default_color), 'ip': str(ip)}
             rows.append(default_row)
 
             with open('devices.csv', mode='a', newline='') as file:
@@ -206,7 +232,7 @@ class ArCondicionado:
         else:
             return 'Comando inválido para o Ar Condicionado!'
 
-    def update_csv(self, modification_spec):
+    def update_csv(self):
         with open('devices.csv', mode='r') as file:
             reader = csv.DictReader(file)
             rows = list(reader)
@@ -215,12 +241,11 @@ class ArCondicionado:
             if int(row['device_id']) == self.id:
                 row['device_id'] = self.id
                 row['status'] = str(self.status)
-                row['modification_spec'] = modification_spec
                 row['current_config'] = self.temperatura
 
         with open('devices.csv', mode='w', newline='') as file:
             fieldnames = ['device_id', 'status',
-                          'modification_spec', 'current_config']
+                          'current_config']
             writer = csv.DictWriter(file, fieldnames=fieldnames)
             writer.writeheader()
             writer.writerows(rows)
@@ -232,7 +257,7 @@ class ArCondicionado:
 
             # Se não existir, cria uma linha com as configurações padrões
             default_row = {'device_id': str(device_id), 'status': str(default_status),
-                           'modification_spec': '', 'current_config': str(default_temperature)}
+                           'current_config': str(default_temperature)}
             rows.append(default_row)
 
             with open('devices.csv', mode='a', newline='') as file:
@@ -252,6 +277,6 @@ def verificar_e_criar_arquivo_csv():
         # caso não exista, ele é criado e tem cabeçalho adicionado para evitar errors com a função processar comando
         with open(arquivo_csv, mode='w', newline='') as file:
             fieldnames = ['device_id', 'status',
-                          'modification_spec', 'current_config']
+                          'current_config']
             writer = csv.DictWriter(file, fieldnames=fieldnames)
             writer.writeheader()
