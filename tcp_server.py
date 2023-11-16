@@ -15,6 +15,25 @@ PORT = 20000        # Porta utilizada pelo servidor
 BUFFER_SIZE = 1024  # tamanho do buffer para recepção dos dados
 
 
+def verificar_e_criar_arquivo_csv():
+    arquivo_csv = 'devices.csv'
+    arquivo_csv_client = 'client.csv'
+
+    # checa se arquivo existe no diretorio atual
+    if not os.path.exists(arquivo_csv):
+        # caso não exista, ele é criado e tem cabeçalho adicionado para evitar errors com a função processar comando
+        with open(arquivo_csv, mode='w', newline='') as file:
+            fieldnames = ['device_id', 'unique_id',
+                          'status', 'current_config', 'ip']
+            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            writer.writeheader()
+    if not os.path.exists(arquivo_csv_client):
+        with open(arquivo_csv_client, mode='w', newline='') as file:
+            fieldnames = ['user_login', 'user_pass', 'ip', 'devices_list']
+            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            writer.writeheader()
+
+
 def gerar_endereco_ip():
     ip_base = "192.168.{}.{}"
     octeto3 = random.randint(0, 255)
@@ -84,7 +103,7 @@ def check_client(user_login, user_pass, unique_id):
     return new_ip
 
 
-def get_devices_info_by_ip(ip, client_csv='client.csv', devices_csv='devices.csv'):
+def get_devices_info_by_ip(ip, client_data, option, client_csv='client.csv', devices_csv='devices.csv'):
     devices_info = ""
 
     with open(client_csv, mode='r') as client_file:
@@ -101,14 +120,15 @@ def get_devices_info_by_ip(ip, client_csv='client.csv', devices_csv='devices.csv
                     devices_content = csv.DictReader(devices_file)
                     devices_content = list(devices_content)
                     for device_row in devices_content:
-                        if device_row['unique_id'] in unique_ids:
-                            devices_info += f"Device ID: {device_row['device_id']}, Unique ID: {device_row['unique_id']}, Status: {device_row['status']}, Current Config: {device_row['current_config']}\n"
+                        if device_row['unique_id'] in unique_ids and device_row['device_id'] == str(client_data):
+                            devices_info += f"Device ID: {device_row['device_id']}, Unique ID: {device_row['unique_id']}, Status: {device_row['status']}, Current Config: {device_row['current_config']}, New Device: {option}\n"
     return devices_info
 
 
 def on_new_client(clientsocket, addr, devices):
     while True:
         try:
+            verificar_e_criar_arquivo_csv()
             data = clientsocket.recv(BUFFER_SIZE)
             if not data:
                 break
@@ -127,10 +147,16 @@ def on_new_client(clientsocket, addr, devices):
             user_login = mensagem_json.get('CLIENT_LOGIN', '')
             user_pass = mensagem_json.get('CLIENT_PASS', '')
             client_data = mensagem_json.get('CLIENT_DATA', '')
+            client_option = mensagem_json.get('CLIENT_OPTION', '')
 
             ip = check_client(user_login, user_pass, '')
 
-            message = get_devices_info_by_ip(ip)
+            message = get_devices_info_by_ip(ip, client_data, client_option)
+
+            if not message and client_option == 'n':
+                message = 'Dispositivo não cadastrado!'
+                print('Dispositivo não cadastrado!')
+
             if not message:
                 message = 'None'
             try:
@@ -162,7 +188,7 @@ def on_new_client(clientsocket, addr, devices):
             if tipo_dispositivo == devices[tipo_dispositivo - 1].id and comando != 5 or comando != -1:
                 dispositivo = devices[tipo_dispositivo - 1]
                 resposta = dispositivo.processar_comando(
-                    comando, dados, ip, client_data, unique_id)
+                    comando, dados, ip, client_option, unique_id)
                 print(resposta)
                 clientsocket.send(resposta.encode('utf-8'))
 

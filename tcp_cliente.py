@@ -17,21 +17,29 @@ def user_interface():
     if option == 's':
         data = int(input(
             'Qual dispositivo deseja adicionar: Lâmpada Inteligente (1) Ar Condicionado (2): '))
-        return login, senha, data
+        return login, senha, data, option
 
-    return login, senha, None
+    data = int(input(
+        'Qual dispositivo deseja modificar: Lâmpada Inteligente (1) Ar Condicionado (2): '))
+
+    return login, senha, data, option
 
 
-def interface():
-    while True:
-        flag = int(input(
-            '\nSelecione uma opção: Lâmpada Inteligente (1)\nAr Condicionado (2)\nSair (3): '))
-        if isinstance(flag, int) and flag in [1, 2, 3]:
-            break
-        if flag == 3:
-            return [-1, -1, -1, None]
+def interface(option, data_client):
 
-    if flag == 1:
+    if (data_client == 1 and option == 's'):
+        return [1, None, None, None]
+    if (data_client == 2 and option == 's'):
+        return [2, None, None, None]
+    # while True:
+    #     flag = int(input(
+    #         '\nSelecione uma opção: Lâmpada Inteligente (1)\nAr Condicionado (2)\nSair (3): '))
+    #     if isinstance(flag, int) and flag in [1, 2, 3]:
+    #         break
+    #     if flag == 3:
+    #         return [-1, -1, -1, None]
+
+    if data_client == 1:
         while True:
             lamp_flag = int(input(
                 '\nLigar lâmpada (1)\nDesligar lâmpada (2)\nMudar cor de lâmpada (3)\nListar configuração atual (4)\nSair (5): '))
@@ -41,7 +49,7 @@ def interface():
             data_input = str(input('\nDefina a cor da lâmpada: '))
             return [1, lamp_flag, data_input, None]
         return [1, lamp_flag, None, None]
-    elif flag == 2:
+    elif data_client == 2:
         while True:
             ac_flag = int(input(
                 '\nLigar o Ar Condicionado: (1)\nDesligar o Ar Condicionado: (2)\nDefinir temperatura do ar: (3)\nListar configuração atual (4)\nSair(5): '))
@@ -53,8 +61,12 @@ def interface():
         return [2, ac_flag, None, None]
 
 
-def interface_with_ids(device_ids, unique_ids):
-    if int(device_ids[0]):
+def interface_with_ids(device_ids, unique_ids, option):
+    if option == 's' and int(device_ids[0]) == 1:
+        return [1, None, None, None]
+    if option == 's' and int(device_ids[0]) == 2:
+        return [2, None, None, None]
+    if int(device_ids[0]) == 1:
         while True:
             if int(device_ids[0]) == 1:
                 if unique_ids:
@@ -69,20 +81,15 @@ def interface_with_ids(device_ids, unique_ids):
                                     input('\nDefina a cor da lâmpada: '))
                                 return [1, lamp_flag, data_input, id_selected]
                             return [1, lamp_flag, None, id_selected]
-                else:
-                    lamp_flag = int(input(
-                        '\nLigar lâmpada (1)\nDesligar lâmpada (2)\nMudar cor de lâmpada (3)\nListar configuração atual (4)\nSair (5): '))
-                    if isinstance(lamp_flag, int) and lamp_flag in [1, 2, 3, 4]:
-                        break
 
     elif int(device_ids[0]) == 2:
         while True:
             if int(device_ids[0]) == 2:
                 if unique_ids:
                     id_selected = str(
-                        input('Selecione uma das IDs de ar condicionado: ', unique_ids))
+                        input(f'Selecione uma das IDs de ar condicionado {unique_ids}: '))
                     if id_selected in unique_ids:
-                        ac_flag = str(input(
+                        ac_flag = int(input(
                             f'\nLigar ar condicionado de ID {id_selected}: (1)\nDesligar ar condicionado de ID {id_selected}: (2)\nMudar a temperatura de ar condicionado de ID {id_selected}: (3)\nListar configuração atual do ar condicionado de ID {id_selected}: (4)\nSair (5): '))
                         if isinstance(ac_flag, int) and ac_flag in [1, 2, 3, 4]:
                             if ac_flag == 3:
@@ -90,11 +97,6 @@ def interface_with_ids(device_ids, unique_ids):
                                     input('\nDefina a temperatura do ar condicionado: '))
                                 return [2, ac_flag, data_input, id_selected]
                             return [2, ac_flag, None, id_selected]
-                else:
-                    ac_flag = int(input(
-                        '\nLigar ar condicionado (1)\nDesligar ar condicionado (2)\nMudar temperatura de ar condicionado (3)\nListar configuração atual do ar condicionado (4)\nSair (5): '))
-                    if isinstance(ac_flag, int) and ac_flag in [1, 2, 3, 4]:
-                        break
 
 
 def extract_ids(device_info_string):
@@ -112,11 +114,12 @@ def extract_ids(device_info_string):
             parts = line.split(',')
             device_id = parts[0].split(':')[-1].strip()
             unique_id = parts[1].split(':')[-1].strip()
+            option = parts[4].split(':')[-1].strip()
 
             device_ids.append(device_id)
             unique_ids.append(unique_id)
 
-    return device_ids, unique_ids
+    return device_ids, unique_ids, option
 
 
 def main(argv):
@@ -130,7 +133,8 @@ def main(argv):
 
                 client_data = {'CLIENT_LOGIN': user_data[0],
                                'CLIENT_PASS': user_data[1],
-                               'CLIENT_DATA': user_data[2]}
+                               'CLIENT_DATA': user_data[2],
+                               'CLIENT_OPTION': user_data[3]}
 
                 client_json_string = json.dumps(client_data)
                 s.send(client_json_string.encode())
@@ -138,16 +142,20 @@ def main(argv):
                 info = s.recv(BUFFER_SIZE)
 
                 info = info.decode('utf-8')
+                if info != 'None':
+                    print('\nRecebido do servidor: ', info)
 
-                print('\nRecebido do servidor: ', info)
+                if info == 'Dispositivo não cadastrado!':
+                    break
 
                 ids_from_ip = extract_ids(info)
                 if not ids_from_ip:
-                    ids_from_ip = ['', '']
+                    ids_from_ip = ['', '', user_data[3]]
                 if ids_from_ip[0]:
-                    flag = interface_with_ids(ids_from_ip[0], ids_from_ip[1])
+                    flag = interface_with_ids(
+                        ids_from_ip[0], ids_from_ip[1], ids_from_ip[2])
                 else:
-                    flag = interface()
+                    flag = interface(ids_from_ip[2], user_data[2])
 
                 my_obj = {'DEVICE': flag[0],
                           "UNIQUE_ID": flag[3],
@@ -155,7 +163,8 @@ def main(argv):
                           "DATA": flag[2],
                           'CLIENT_LOGIN': user_data[0],
                           'CLIENT_PASS': user_data[1],
-                          'CLIENT_DATA': user_data[2]}
+                          'CLIENT_DATA': user_data[2],
+                          'CLIENT_OPTION:': user_data[3]}
 
                 # device_json_string = json.dumps(device_obj)
                 json_string = json.dumps(my_obj)

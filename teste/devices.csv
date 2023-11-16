@@ -1,0 +1,10 @@
+device_id,unique_id,status,current_config,ip
+1,8,False,verde,192.168.2.72
+1,12,False,white,192.168.2.72
+2,7,True,20,192.168.2.72
+2,2,True,25,192.168.2.72
+1,2,False,verde,192.168.2.72
+1,10,True,white,192.168.2.72
+2,7,True,20,192.168.236.184
+1,17,True,white,192.168.236.184
+1,9,True,verde,192.168.180.131
