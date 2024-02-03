@@ -10,116 +10,51 @@ PORT = 20000        # Porta utilizada pelo servidor
 BUFFER_SIZE = 1024  # tamanho do buffer para recepção dos dados
 
 
+# conectar no server lampada
+HOST_LAMP = '127.0.0.2'
+PORT_LAMP = 20001
+
+# conectar no server socket
+HOST_AR = '127.0.0.3'
+PORT_AR = 20002
+
+
 def user_interface():
-    login = str(input('Usuário: '))
-    senha = str(input('Senha: '))
-    option = str(input('Deseja adicionar um novo dispositivo? [s]/[n]: '))
-    if option == 's':
-        data = int(input(
-            'Qual dispositivo deseja adicionar: Lâmpada Inteligente (1) Ar Condicionado (2): '))
-        return login, senha, data, option
-
-    data = int(input(
-        'Qual dispositivo deseja modificar: Lâmpada Inteligente (1) Ar Condicionado (2): '))
-
-    return login, senha, data, option
+    login = str(input('Insira um Usuário: '))
+    return login
 
 
-def interface(option, data_client):
-
-    if (data_client == 1 and option == 's'):
-        return [1, None, None, None]
-    if (data_client == 2 and option == 's'):
-        return [2, None, None, None]
-    # while True:
-    #     flag = int(input(
-    #         '\nSelecione uma opção: Lâmpada Inteligente (1)\nAr Condicionado (2)\nSair (3): '))
-    #     if isinstance(flag, int) and flag in [1, 2, 3]:
-    #         break
-    #     if flag == 3:
-    #         return [-1, -1, -1, None]
-
-    if data_client == 1:
-        while True:
-            lamp_flag = int(input(
-                '\nLigar lâmpada (1)\nDesligar lâmpada (2)\nMudar cor de lâmpada (3)\nListar configuração atual (4)\nSair (5): '))
-            if isinstance(lamp_flag, int) and lamp_flag in [1, 2, 3, 4]:
-                break
-        if lamp_flag == 3:
-            data_input = str(input('\nDefina a cor da lâmpada: '))
-            return [1, lamp_flag, data_input, None]
-        return [1, lamp_flag, None, None]
-    elif data_client == 2:
-        while True:
-            ac_flag = int(input(
-                '\nLigar o Ar Condicionado: (1)\nDesligar o Ar Condicionado: (2)\nDefinir temperatura do ar: (3)\nListar configuração atual (4)\nSair(5): '))
-            if isinstance(ac_flag, int) and ac_flag in [1, 2, 3, 4]:
-                break
-        if ac_flag == 3:
-            data_input = str(input('Defina a temperatura do ar: '))
-            return [2, ac_flag, data_input, None]
-        return [2, ac_flag, None, None]
+def interface_option():
+    while True:
+        flag = int(
+            input(("Deseja modificar qual dispositivo? (1) Lâmpada || (2) Ar-Condicionado: ")))
+        if isinstance(flag, int) and flag in [1, 2]:
+            break
+    return flag
 
 
-def interface_with_ids(device_ids, unique_ids, option):
-    if option == 's' and int(device_ids[0]) == 1:
-        return [1, None, None, None]
-    if option == 's' and int(device_ids[0]) == 2:
-        return [2, None, None, None]
-    if int(device_ids[0]) == 1:
-        while True:
-            if int(device_ids[0]) == 1:
-                if unique_ids:
-                    id_selected = str(
-                        input(f'Selecione uma das IDs de lâmpada: {unique_ids}: '))
-                    if id_selected in unique_ids:
-                        lamp_flag = int(input(
-                            f'\nLigar lâmpada de ID {id_selected}: (1)\nDesligar lâmpada de ID {id_selected}: (2)\nMudar cor de lâmpada de ID {id_selected}: (3)\nListar configuração atual da lâmpada de ID {id_selected}: (4)\nSair (5): '))
-                        if isinstance(lamp_flag, int) and lamp_flag in [1, 2, 3, 4]:
-                            if lamp_flag == 3:
-                                data_input = str(
-                                    input('\nDefina a cor da lâmpada: '))
-                                return [1, lamp_flag, data_input, id_selected]
-                            return [1, lamp_flag, None, id_selected]
-
-    elif int(device_ids[0]) == 2:
-        while True:
-            if int(device_ids[0]) == 2:
-                if unique_ids:
-                    id_selected = str(
-                        input(f'Selecione uma das IDs de ar condicionado {unique_ids}: '))
-                    if id_selected in unique_ids:
-                        ac_flag = int(input(
-                            f'\nLigar ar condicionado de ID {id_selected}: (1)\nDesligar ar condicionado de ID {id_selected}: (2)\nMudar a temperatura de ar condicionado de ID {id_selected}: (3)\nListar configuração atual do ar condicionado de ID {id_selected}: (4)\nSair (5): '))
-                        if isinstance(ac_flag, int) and ac_flag in [1, 2, 3, 4]:
-                            if ac_flag == 3:
-                                data_input = str(
-                                    input('\nDefina a temperatura do ar condicionado: '))
-                                return [2, ac_flag, data_input, id_selected]
-                            return [2, ac_flag, None, id_selected]
+def interface_lamp(device_id=1):
+    while True:
+        lamp_flag = int(input(
+            '\nLigar lâmpada (1)\nDesligar lâmpada (2)\nMudar cor de lâmpada (3)\nListar configuração atual (4) \nCriar nova lâmpada (5)\nSair (6): '))
+        if isinstance(lamp_flag, int) and lamp_flag in [1, 2, 3, 4, 5, 6]:
+            break
+    if lamp_flag == 3:
+        data_input = str(input('\nDefina a cor da lâmpada: '))
+        return [device_id, lamp_flag, data_input]
+    return [device_id, lamp_flag, None]
 
 
-def extract_ids(device_info_string):
-    if device_info_string == 'None':
-        return None
-    device_ids = []
-    unique_ids = []
-
-    # Split the string into lines
-    lines = device_info_string.split('\n')
-
-    # Iterate over each line and extract device_id and unique_id
-    for line in lines:
-        if line.strip():  # Check if the line is not empty
-            parts = line.split(',')
-            device_id = parts[0].split(':')[-1].strip()
-            unique_id = parts[1].split(':')[-1].strip()
-            option = parts[4].split(':')[-1].strip()
-
-            device_ids.append(device_id)
-            unique_ids.append(unique_id)
-
-    return device_ids, unique_ids, option
+def interface_ar(device_id=2):
+    while True:
+        ar_flag = int(input(
+            '\nLigar Ar-Condicionado (1)\nDesligar Ar-Condicionado (2)\nMudar temperatura de Ar-Condicionado (3)\nListar configuração atual (4)\nCriar novo Ar-Condicionado (5)\nSair (6): '))
+        if isinstance(ar_flag, int) and ar_flag in [1, 2, 3, 4, 5, 6]:
+            break
+    if ar_flag == 3:
+        data_input = str(input('\nDefina a temperatura do ar: '))
+        return [device_id, ar_flag, data_input]
+    return [device_id, ar_flag, None]
 
 
 def main(argv):
@@ -129,59 +64,110 @@ def main(argv):
             print("Cliente conectado ao servidor!")
 
             while True:
+                # validar usuario (não pode haver colisão de nomes)
                 user_data = user_interface()
-
-                client_data = {'CLIENT_LOGIN': user_data[0],
-                               'CLIENT_PASS': user_data[1],
-                               'CLIENT_DATA': user_data[2],
-                               'CLIENT_OPTION': user_data[3]}
-
+                client_data = {'CLIENT_LOGIN': user_data}
                 client_json_string = json.dumps(client_data)
                 s.send(client_json_string.encode())
-
-                info = s.recv(BUFFER_SIZE)
-
-                info = info.decode('utf-8')
-                if info != 'None':
-                    print('\nRecebido do servidor: ', info)
-
-                if info == 'Dispositivo não cadastrado!':
-                    break
-
-                ids_from_ip = extract_ids(info)
-                if not ids_from_ip:
-                    ids_from_ip = ['', '', user_data[3]]
-                if ids_from_ip[0]:
-                    flag = interface_with_ids(
-                        ids_from_ip[0], ids_from_ip[1], ids_from_ip[2])
+                info = list(s.recv(BUFFER_SIZE))
+                if not info[0] and not info[1]:
+                    print("Cadastro de cliente realizado, já que não existia!")
                 else:
-                    flag = interface(ids_from_ip[2], user_data[2])
+                    print("Usuário validado!")
 
-                my_obj = {'DEVICE': flag[0],
-                          "UNIQUE_ID": flag[3],
-                          "OPERATION": flag[1],
-                          "DATA": flag[2],
-                          'CLIENT_LOGIN': user_data[0],
-                          'CLIENT_PASS': user_data[1],
-                          'CLIENT_DATA': user_data[2],
-                          'CLIENT_OPTION:': user_data[3]}
+                flag = interface_option()
 
-                # device_json_string = json.dumps(device_obj)
+                if flag == 1:
+                    information_to_be_sent = interface_lamp()
+                else:
+                    information_to_be_sent = interface_ar()
+
+                if information_to_be_sent[1] == 6:
+                    print("Programa será encerrado!")
+                    s.send("Shutdown".encode())
+
+                # transformar valores do usuario em obj json
+                my_obj = {'DEVICE': information_to_be_sent[0],
+                          "OPERATION": information_to_be_sent[1],
+                          "DATA": information_to_be_sent[2],
+                          "USER_LOGIN": client_data.get('CLIENT_LOGIN', '')}
+
                 json_string = json.dumps(my_obj)
 
-                # flag.encode - converte a string para bytes
-                s.send(json_string.encode())
-                # s.send(device_json_string.encode())
+                if my_obj['DEVICE'] == 1:
+                    try:
+                        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as socket_lamp:
+                            socket_lamp.connect((HOST_LAMP, PORT_LAMP))
+                            socket_lamp.send(json_string.encode())
 
-                data = s.recv(BUFFER_SIZE)
-                texto_string = data.decode('utf-8')
+                            if my_obj["OPERATION"] == 6:
+                                break
 
-                print('\nRecebido do servidor: ', texto_string)
+                            print("Cliente conectado ao servidor!")
+                            recv = (socket_lamp.recv(BUFFER_SIZE))
 
-                if texto_string == '5':
-                    print('O servidor encerrou a conexão!')
-                    s.close()
-                    break
+                            received_msg = json.loads(recv)
+
+                            resposta_svr = received_msg[0]
+                            print(resposta_svr)
+                            if my_obj.get("OPERATION", "") == 5 and len(received_msg[1]) > 1:
+                                print("Escolha uma lâmpada para copiar configurações de lâmpada já existente. ",
+                                      "[", received_msg[1], "]: ", end='')
+                                decision = str(input())
+                            elif my_obj.get("OPERATION", "") == 5 and isinstance(received_msg[1], int):
+                                print("Lâmpada criada recebeu configurações padrões! ",
+                                      received_msg[1], end='')
+                                decision = received_msg[1]
+                            else:
+                                print("Qual lâmpada deseja editar: ",
+                                      "[", received_msg[1], "]: ", end='')
+                                decision = str(input())
+                            socket_lamp.send(decision.encode())
+                            # edição de lampada
+                            resposta = socket_lamp.recv(BUFFER_SIZE)
+                            resposta_str = resposta.decode('utf-8')
+                            print(resposta_str)
+                    except Exception as e:
+                        print(
+                            "Não foi possível conectar ao servidor da lâmpada. Erro: ", e)
+
+                elif my_obj['DEVICE'] == 2:
+                    try:
+                        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as socket_lamp:
+                            socket_lamp.connect((HOST_AR, PORT_AR))
+                            socket_lamp.send(json_string.encode())
+
+                            if my_obj["OPERATION"] == 6:
+                                break
+
+                            print("Cliente conectado ao servidor!")
+                            recv = (socket_lamp.recv(BUFFER_SIZE))
+
+                            received_msg = json.loads(recv)
+
+                            resposta_svr = received_msg[0]
+                            print(resposta_svr)
+                            if my_obj.get("OPERATION", "") == 5 and len(received_msg[1]) > 1:
+                                print("Escolha uma Ar-Condicionado para copiar configurações de Ar já existente. ",
+                                      "[", received_msg[1], "]: ", end='')
+                                decision = str(input())
+                            elif my_obj.get("OPERATION", "") == 5 and isinstance(received_msg[1], int):
+                                print("Ar Condicionado criado recebeu configurações padrões! ",
+                                      received_msg[1], end='')
+                                decision = received_msg[1]
+                            else:
+                                print("Qual Ar Condicionado deseja editar: ",
+                                      "[", received_msg[1], "]: ", end='')
+                                decision = str(input())
+                            socket_lamp.send(decision.encode())
+                            # edição de lampada
+                            resposta = socket_lamp.recv(BUFFER_SIZE)
+                            resposta_str = resposta.decode('utf-8')
+                            print(resposta_str)
+
+                    except Exception as e:
+                        print(
+                            "Não foi possível conectar ao servidor do Ar Condicionado. Erro: ", e)
 
     except Exception as error:
         print("Exceção - Programa será encerrado!")
