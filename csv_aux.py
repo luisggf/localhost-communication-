@@ -9,20 +9,33 @@ import ast
 
 
 def verificar_e_criar_arquivo_csv():
-    arquivo_csv = 'devices.csv'
-    arquivo_csv_client = 'client.csv'
+    arquivo_csv_ar = 'ar.csv'
+    arquivo_csv_lamp = 'lamp.csv'
+    arquivo_csv = 'client.csv'
+    arquivo_csv_client = 'client_ar.csv'
 
     # checa se arquivo existe no diretorio atual
-    if not os.path.exists(arquivo_csv):
+    if not os.path.exists(arquivo_csv_ar):
         # caso não exista, ele é criado e tem cabeçalho adicionado para evitar errors com a função processar comando
-        with open(arquivo_csv, mode='w', newline='') as file:
-            fieldnames = ['device_id', 'unique_id',
-                          'status', 'current_config', 'ip']
+        with open(arquivo_csv_ar, mode='w', newline='') as file:
+            fieldnames = ['unique_id', 'status',
+                          'current_config', 'ip', 'user']
             writer = csv.DictWriter(file, fieldnames=fieldnames)
             writer.writeheader()
     if not os.path.exists(arquivo_csv_client):
         with open(arquivo_csv_client, mode='w', newline='') as file:
+            fieldnames = ['user_login', 'ip', 'devices_list']
+            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            writer.writeheader()
+    if not os.path.exists(arquivo_csv):
+        with open(arquivo_csv, mode='w', newline='') as file:
             fieldnames = ['user_login', 'user_pass', 'ip', 'devices_list']
+            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            writer.writeheader()
+    if not os.path.exists(arquivo_csv_lamp):
+        with open(arquivo_csv_lamp, mode='w', newline='') as file:
+            fieldnames = ['unique_id', 'status',
+                          'current_config', 'ip', 'user']
             writer = csv.DictWriter(file, fieldnames=fieldnames)
             writer.writeheader()
 
