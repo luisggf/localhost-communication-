@@ -26,7 +26,6 @@ class Lampada:
                                'yellow', 'laranja', 'orange']
 
     def processar_comando(self, comando, ip, data, unique_id, user):
-        verificar_e_criar_arquivo_csv()
         if comando == 5:
             random_id = random.randint(1, 999)
             if not self.check_device(random_id, ip):
@@ -200,7 +199,6 @@ def check_device_test(lamp, ip, user):
 
 def on_new_client(clientsocket, addr, lamp):
     try:
-        verificar_e_criar_arquivo_csv()
         while True:
             data = clientsocket.recv(BUFFER_SIZE)
             if not data:
@@ -216,16 +214,19 @@ def on_new_client(clientsocket, addr, lamp):
             tipo_dispositivo = mensagem_json.get('DEVICE', '')
             comando = mensagem_json.get('OPERATION', '')
             dados = mensagem_json.get('DATA', '')
-            user = mensagem_json.get('USER_LOGIN', '')
+            user = mensagem_json.get('CLIENT_LOGIN', '')
+
+            # caso comando seja 6 servidor lampada será encerrado
+            # encerramento deve ser posicionado apos a função check_device_test pois
+            # ela é responsavel por manipular arquivos
+            if comando in [6, -1]:
+                print('Vai encerrar o socket do cliente {} !'.format(addr[0]))
+                clientsocket.send(str(comando).encode('utf-8'))
+                break
 
             ip = addr[0]
 
             mensagem, unique_id = check_device_test(lamp, ip, user)
-
-            # if comando in [6, -1]:
-            #     print('Vai encerrar o socket do cliente {} !'.format(addr[0]))
-            #     clientsocket.send(str(comando).encode('utf-8'))
-            #     return
 
             msg_to_client = [mensagem, unique_id]
 
@@ -251,8 +252,6 @@ def on_new_client(clientsocket, addr, lamp):
     except Exception as error:
         print('Erro: ', error)
         print("Erro na conexão com o cliente!!")
-    finally:
-        clientsocket.close()
 
 
 def verificar_e_criar_arquivo_csv():
@@ -268,7 +267,7 @@ def verificar_e_criar_arquivo_csv():
             writer.writeheader()
 
 
-def main():
+def main_lamp_server():
     try:
         lamp = Lampada()
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -285,9 +284,7 @@ def main():
     except Exception as error:
         print("Erro na execução do servidor!!")
         print(error)
-    finally:
-        server_socket.close()
 
 
 if __name__ == "__main__":
-    main()
+    main_lamp_server()
