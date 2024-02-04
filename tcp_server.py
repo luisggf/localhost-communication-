@@ -9,12 +9,20 @@ from csv_aux import *
 import struct
 
 
-HOST = '127.0.0.1'  # endereço IP
-PORT = 20000        # Porta utilizada pelo servidor
+HOST = '0.0.0.0'  # endereço IP
+PORT = 20001        # Porta utilizada pelo servidor
 BUFFER_SIZE = 1024  # tamanho do buffer para recepção dos dados
 
 
 def on_new_client(clientsocket, addr):
+    """
+    Lida com uma nova conexão de cliente.
+
+    Parâmetros:
+    - clientsocket (socket): Socket do cliente.
+    - addr (tuple): Tupla contendo o endereço IP e porta do cliente.
+    - Ar (Ar-Condicionado): Instância da classe ArCondicionado.
+    """
     try:
         verificar_e_criar_arquivo_csv()
         while True:

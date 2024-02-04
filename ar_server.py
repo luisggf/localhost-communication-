@@ -18,6 +18,19 @@ class ArCondicionado:
         self.allowed_range = range(15, 30)
 
     def processar_comando(self, comando, ip, data, unique_id, user):
+        """
+        Processa comandos para controle de uma lâmpada.
+
+        Parâmetros:
+        - comando (int): Número do comando a ser executado.
+        - ip (str): Endereço IP do cliente.
+        - data (str): Dados associados ao comando.
+        - unique_id (int): Identificador único da lâmpada.
+        - user (str): Nome do usuário associado à lâmpada.
+
+        Retorna:
+        - str: Mensagem de resposta ao comando.
+        """
         if comando == 5:
             random_id = random.randint(1, 999)
             if not self.check_device(random_id, ip):
@@ -89,18 +102,13 @@ class ArCondicionado:
         else:
             return 'Comando inválido para o Ar Condicionado!'
 
-    def check_device(self, unique_id, ip):
-        with open('ar.csv', mode='r') as file:
-            content = csv.DictReader(file)
-            rows = list(content)
-
-            for row in rows:
-                if row['unique_id'] == unique_id and row['ip'] == ip:
-                    return True
-
-            return False
-
     def update_csv(self, ip, unique_id):
+        """
+        Atualiza o arquivo csv da lâmpada baseado nas informações enviadas e em dados da memória RAM
+        Parâmetros:
+        - ip (str): Endereço IP do cliente.
+        - unique_id (int): Identificador único da lâmpada.
+        """
         with open('ar.csv', mode='r') as file:
             reader = csv.DictReader(file)
             rows = list(reader)
@@ -120,6 +128,19 @@ class ArCondicionado:
             writer.writerows(rows)
 
     def inicializar_dispositivo(self, unique_id, default_status, default_temperature, ip, user):
+        """
+        Inicializa um novo dispositivo de lâmpada com as configurações padrão.
+
+        Parâmetros:
+        - unique_id (int): Identificador único do dispositivo.
+        - default_status (bool): Status padrão do dispositivo.
+        - default_color (str): Cor padrão do dispositivo.
+        - ip (str): Endereço IP do cliente associado ao dispositivo.
+        - user (str): Nome do usuário associado ao dispositivo.
+
+        Retorna:
+        - str: Mensagem indicando a inicialização bem-sucedida do dispositivo.
+        """
         # Read client_ar.csv
         with open("client_ar.csv", mode='r') as file_client:
             reader_client = csv.DictReader(file_client)
@@ -156,6 +177,17 @@ class ArCondicionado:
             return f'Cliente não encontrado para o usuário {user} e IP {ip}'
 
     def find_client(self, rows, ip, user):
+        """
+            Encontra um cliente na lista fornecida com base no IP e informações do usuário.
+
+            Parâmetros:
+            - rows (list): Lista de dicionários representando informações do cliente.
+            - ip (str): Endereço IP do cliente a ser encontrado.
+            - user (str): Login de usuário associado ao cliente.
+
+            Retorna:
+            - dict ou None: Se um cliente correspondente for encontrado, o dicionário representando o cliente; caso contrário, None.
+        """
         for client in rows:
             if client['ip'] == ip and client['user_login'] == user:
                 return client
@@ -163,6 +195,17 @@ class ArCondicionado:
 
 
 def check_device_test(ar, ip, user):
+    """
+    Verifica a existência do dispositivo associado a um usuário e IP específicos.
+
+    Parâmetros:
+    - Ar (Ar-Condicionado): Instância da classe ArCondicionado.
+    - ip (str): Endereço IP do dispositivo.
+    - user (str): Login de usuário associado ao dispositivo.
+
+    Retorna:
+    - tuple: Uma tupla contendo uma mensagem informativa e o identificador único do dispositivo.
+    """
     with open('client_ar.csv', mode='r') as file_client:
         content_client = csv.DictReader(file_client)
         rows_client = list(content_client)
@@ -190,6 +233,14 @@ def check_device_test(ar, ip, user):
 
 
 def on_new_client(clientsocket, addr, ar):
+    """
+    Lida com uma nova conexão de cliente.
+
+    Parâmetros:
+    - clientsocket (socket): Socket do cliente.
+    - addr (tuple): Tupla contendo o endereço IP e porta do cliente.
+    - Ar (Ar-Condicionado): Instância da classe ArCondicionado.
+    """
     try:
         while True:
             data = clientsocket.recv(BUFFER_SIZE)
@@ -244,6 +295,10 @@ def on_new_client(clientsocket, addr, ar):
 
 
 def verificar_e_criar_arquivo_csv():
+    """
+    Caso os arquivos fundamentais não existam, essa função auxiliar os criam com o cabeçalho
+    necessário para execução.
+    """
     arquivo_csv = 'ar.csv'
 
     # checa se arquivo existe no diretorio atual
@@ -260,7 +315,7 @@ def main_ar_server():
     try:
         ar = ArCondicionado()
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        server_socket.bind(('127.0.0.3', 20002))
+        server_socket.bind(('0.0.0.0', 20002))
         server_socket.listen()
 
         print('Aguardando conexões...')

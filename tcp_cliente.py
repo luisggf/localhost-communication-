@@ -4,30 +4,34 @@ __author__ = "Filipe Ribeiro"
 import socket
 import sys
 import json
-from tcp_server import *
-from ar_server import *
-from lamp_server import *
 
-HOST = '127.0.0.1'  # endereço IP
-PORT = 20000        # Porta utilizada pelo servidor
-BUFFER_SIZE = 1024  # tamanho do buffer para recepção dos dados
+# substituir pelo endereço ipv4 do computador que deseja conectar no meu caso o ipv4 é o valor dos HOSTS
+HOST = '192.168.2.102'  # endereço IP
+PORT = 20001            # Porta utilizada pelo servidor
+BUFFER_SIZE = 1024      # tamanho do buffer para recepção dos dados
 
 
 # conectar no server lampada
-HOST_LAMP = '127.0.0.2'
-PORT_LAMP = 20001
+HOST_LAMP = '192.168.2.102'
+PORT_LAMP = 20002
 
 # conectar no server socket
-HOST_AR = '127.0.0.3'
-PORT_AR = 20002
+HOST_AR = '192.168.2.102'
+PORT_AR = 20003
 
 
 def user_interface():
+    """
+        Recebe Input do usuário de informação cadastral: Nome de usuário.
+    """
     login = str(input('Insira um Usuário: '))
     return login
 
 
 def interface_option():
+    """
+        Recebe Input do usuário de qual dispositivo será modificado.
+    """
     while True:
         flag = int(
             input(("Deseja modificar qual dispositivo? (1) Lâmpada || (2) Ar-Condicionado: ")))
@@ -37,6 +41,9 @@ def interface_option():
 
 
 def interface_lamp(device_id=1):
+    """
+        Recebe Input do usuário de qual será a operação realizada sobre a lâmpada X.
+    """
     while True:
         lamp_flag = int(input(
             '\nLigar lâmpada (1)\nDesligar lâmpada (2)\nMudar cor de lâmpada (3)\nListar configuração atual (4) \nCriar nova lâmpada (5)\nSair (6): '))
@@ -49,6 +56,9 @@ def interface_lamp(device_id=1):
 
 
 def interface_ar(device_id=2):
+    """
+        Recebe Input do usuário de qual será a operação realizada sobre a Ar Condicionado X.
+    """
     while True:
         ar_flag = int(input(
             '\nLigar Ar-Condicionado (1)\nDesligar Ar-Condicionado (2)\nMudar temperatura de Ar-Condicionado (3)\nListar configuração atual (4)\nCriar novo Ar-Condicionado (5)\nSair (6): '))

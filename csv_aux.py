@@ -4,6 +4,10 @@ import csv
 
 
 def verificar_e_criar_arquivo_csv():
+    """
+    Caso os arquivos fundamentais não existam, essa função auxiliar os criam com o cabeçalho
+    necessário para execução.
+    """
     arquivo_csv_ar = 'ar.csv'
     arquivo_csv_lamp = 'lamp.csv'
     arquivo_csv_client_lamp = 'client.csv'
@@ -39,6 +43,10 @@ def verificar_e_criar_arquivo_csv():
 
 
 def gerar_endereco_ip():
+    """
+    Gera endereço IPV4 aleatório, atualmente não usado no código, porém pode ser
+    útil.
+    """
     ip_base = "192.168.{}.{}"
     octeto3 = random.randint(0, 255)
     octeto4 = random.randint(0, 255)
@@ -46,6 +54,17 @@ def gerar_endereco_ip():
 
 
 def check_client_test(ip, user_login):
+    """
+    Verifica se um cliente está cadastrado com base no endereço IP e login do usuário e escreve no arquivo de cliente as
+    informações relacionadas ao usuário.
+
+    Parâmetros:
+    - ip (str): Endereço IP do cliente.
+    - user_login (str): Login do usuário associado ao cliente.
+
+    Retorna:
+    - Tuple[bool, bool]: Um par de valores booleanos. O primeiro indica se o cliente está cadastrado, e o segundo indica se o usuário está associado ao cliente.
+    """
     with open('client.csv', mode='r') as file:
         content = csv.DictReader(file)
         clients = list(content)
@@ -73,6 +92,18 @@ def check_client_test(ip, user_login):
 
 
 def check_client_test_ar(ip, user_login):
+    """
+    Verifica se um cliente está cadastrado com base no endereço IP e login do usuário e escreve no arquivo de cliente as
+    informações relacionadas ao usuário. Essa função existe para separar SmartDevices distintos, porém a função
+    check_client_test() funciona de forma análoga a essa.
+
+    Parâmetros:
+    - ip (str): Endereço IP do cliente.
+    - user_login (str): Login do usuário associado ao cliente.
+
+    Retorna:
+    - Tuple[bool, bool]: Um par de valores booleanos. O primeiro indica se o cliente está cadastrado, e o segundo indica se o usuário está associado ao cliente.
+    """
     with open('client_ar.csv', mode='r') as file:
         content = csv.DictReader(file)
         clients = list(content)
