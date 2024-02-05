@@ -16,28 +16,29 @@ def verificar_e_criar_arquivo_csv():
     # checa se arquivo existe no diretorio atual
     if not os.path.exists(arquivo_csv_ar):
         # caso não exista, ele é criado e tem cabeçalho adicionado para evitar errors com a função processar comando
-        with open(arquivo_csv_ar, mode='w', newline='') as file:
+        with open(arquivo_csv_ar, mode='a', newline='') as file:
             fieldnames = ['unique_id', 'status',
                           'current_config', 'ip', 'user']
             writer = csv.DictWriter(file, fieldnames=fieldnames)
             writer.writeheader()
 
     if not os.path.exists(arquivo_csv_client_ar):
-        with open(arquivo_csv_client_ar, mode='w', newline='') as file:
+        with open(arquivo_csv_client_ar, mode='a', newline='') as file:
             fieldnames = ['user_login', 'ip', 'devices_list']
             writer = csv.DictWriter(file, fieldnames=fieldnames)
             writer.writeheader()
 
     if not os.path.exists(arquivo_csv_client_lamp):
-        with open(arquivo_csv_client_lamp, mode='w', newline='') as file:
+        with open(arquivo_csv_client_lamp, mode='a', newline='') as file:
             fieldnames = ['user_login', 'ip', 'devices_list']
             writer = csv.DictWriter(file, fieldnames=fieldnames)
             writer.writeheader()
 
     if not os.path.exists(arquivo_csv_lamp):
-        with open(arquivo_csv_lamp, mode='w', newline='') as file:
+        with open(arquivo_csv_lamp, mode='a', newline='') as file:
             fieldnames = ['unique_id', 'status',
                           'current_config', 'ip', 'user']
+
             writer = csv.DictWriter(file, fieldnames=fieldnames)
             writer.writeheader()
 

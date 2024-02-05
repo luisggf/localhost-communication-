@@ -1,1 +1,5 @@
 unique_id,status,current_config,ip,user
+505,True,red,192.168.0.101,luis
+638,False,White,192.168.0.101,1
+652,True,red,192.168.0.101,luis
+356,True,white,192.168.0.101,luis

@@ -1,1 +1,4 @@
 unique_id,status,current_config,ip,user
+766,False,22,192.168.0.101,luis
+127,False,22,192.168.0.101,luis
+103,True,18,192.168.0.101,luis

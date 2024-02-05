@@ -4,7 +4,7 @@
 
 Este projeto consiste em um sistema de controle de dispositivos de ar condicionado e lâmpadas, onde é possível interagir com esses dispositivos por meio de servidores Python.
 
-O sistema é dividido em três arquivos principais:
+O sistema é dividido em quatro arquivos principais:
 
 ### 1. **AR_SERVER.py**
 
@@ -14,7 +14,11 @@ Este arquivo contém a implementação do servidor responsável pelo controle do
 
 Este arquivo contém a implementação do servidor responsável pelo controle do dispositivo de lâmpada. Semelhante ao servidor do ar condicionado, aceita conexões de clientes e processa comandos para ligar, desligar, alterar cor e exibir informações sobre a lâmpada.
 
-### 3. **CSV_AUX.py**
+### 3. **TCP_SERVER.py**
+
+Este arquivo é responsável por validar e criar diretórios de arquivos CSVs necessários. Além disso, também realiza o cadastro e validação de usuários nesses arquivos.
+
+### 4. **CSV_AUX.py**
 
 Este arquivo fornece funções auxiliares relacionadas à manipulação de arquivos CSV. Ele contém funções para verificar e criar arquivos CSV para os dispositivos de ar condicionado e lâmpadas.
 
@@ -26,6 +30,8 @@ Este arquivo fornece funções auxiliares relacionadas à manipulação de arqui
 - Biblioteca `socket` disponível (já inclusa na biblioteca padrão do Python)
 
 ### Execução
+
+inicialmente deve-se declarar nas variavéis globais HOST_X o endereço IPV4 da máquina servidor.
 
 1. **AR_SERVER.py**
 
@@ -55,7 +61,7 @@ Este arquivo fornece funções auxiliares relacionadas à manipulação de arqui
    python TCP_SERVER.py
    ```
 
-   O servidor de clientes ficará ouvindo por conexões na porta `20003`.
+   O servidor de clientes ficará ouvindo por conexões na porta `20001`.
 
 ### Clientes
 

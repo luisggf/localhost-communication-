@@ -39,12 +39,7 @@ class Lampada:
         Retorna:
         - str: Mensagem de resposta ao comando.
         """
-        if comando == 5:
-            random_id = random.randint(1, 999)
-            if not self.check_device(random_id, ip):
-
-                return ("Dispositivo: " + self.inicializar_dispositivo(random_id, self.status, self.color, ip, user) + "criado com sucesso!")
-        elif comando == 1:
+        if comando == 1:
             with open('lamp.csv', mode='r') as file:
                 content = csv.DictReader(file)
                 rows = list(content)
@@ -107,6 +102,9 @@ class Lampada:
                         self.color = row['current_config']
                     if row['ip'] == ip and int(row['unique_id']) == unique_id:
                         return ('Dispositivo: ' + str(row))
+        elif comando == 5:
+            random_id = random.randint(1, 999)
+            return ("Dispositivo: " + self.inicializar_dispositivo(random_id, self.status, self.color, ip, user) + "criado com sucesso!")
         else:
             return 'Comando inválido para a lâmpada!'
 
@@ -250,76 +248,79 @@ def on_new_client(clientsocket, addr, lamp):
     - lamp (Lampada): Instância da classe Lampada.
     """
     try:
-        while True:
-            data = clientsocket.recv(BUFFER_SIZE)
-            if not data:
-                break
-            texto_recebido = data.decode('utf-8')
-            print('recebido do cliente {} na porta {}: {}'.format(
-                addr[0], addr[1], texto_recebido))
+        client_ip = addr[0]
+
+        # Define your IP range
+        start_ip_range = '192.168.0.0'
+        end_ip_range = '192.168.255.255'
+
+        # Check if the client's IP is within the specified range
+        if is_ip_in_range(client_ip, start_ip_range, end_ip_range):
             try:
-                mensagem_json = json.loads(texto_recebido)
-            except json.JSONDecodeError:
-                mensagem_json = {}
+                while True:
+                    data = clientsocket.recv(BUFFER_SIZE)
+                    if not data:
+                        break
+                    texto_recebido = data.decode('utf-8')
+                    print('recebido do cliente {} na porta {}: {}'.format(
+                        addr[0], addr[1], texto_recebido))
+                    try:
+                        mensagem_json = json.loads(texto_recebido)
+                    except json.JSONDecodeError:
+                        mensagem_json = {}
 
-            tipo_dispositivo = mensagem_json.get('DEVICE', '')
-            comando = mensagem_json.get('OPERATION', '')
-            dados = mensagem_json.get('DATA', '')
-            user = mensagem_json.get('CLIENT_LOGIN', '')
+                    tipo_dispositivo = mensagem_json.get('DEVICE', '')
+                    comando = mensagem_json.get('OPERATION', '')
+                    dados = mensagem_json.get('DATA', '')
+                    user = mensagem_json.get('CLIENT_LOGIN', '')
 
-            # caso comando seja 6 servidor lampada será encerrado
-            # encerramento deve ser posicionado apos a função check_device_test pois
-            # ela é responsavel por manipular arquivos
-            if comando in [6, -1]:
-                print('Vai encerrar o socket do cliente {} !'.format(addr[0]))
-                clientsocket.send(str(comando).encode('utf-8'))
-                break
+                    # caso comando seja 6 servidor lampada será encerrado
+                    # encerramento deve ser posicionado apos a função check_device_test pois
+                    # ela é responsavel por manipular arquivos
+                    if comando in [6]:
+                        print(
+                            'Vai encerrar o socket do cliente {} !'.format(addr[0]))
+                        clientsocket.send(str(comando).encode('utf-8'))
+                        break
 
-            ip = addr[0]
+                    ip = addr[0]
 
-            mensagem, unique_id = check_device_test(lamp, ip, user)
+                    mensagem, unique_id = check_device_test(lamp, ip, user)
 
-            msg_to_client = [mensagem, unique_id]
+                    msg_to_client = [mensagem, unique_id]
 
-            msg_to_client_json = json.dumps(msg_to_client)
+                    msg_to_client_json = json.dumps(msg_to_client)
 
-            clientsocket.send(msg_to_client_json.encode('utf-8'))
+                    clientsocket.send(msg_to_client_json.encode('utf-8'))
 
-            # resposta
-            unique_id_aswner = (clientsocket.recv(BUFFER_SIZE))
-            try:
-                unique_id_aswner_json = json.loads(unique_id_aswner)
+                    # resposta
+                    unique_id_aswner = (clientsocket.recv(BUFFER_SIZE))
+                    try:
+                        unique_id_aswner_json = json.loads(unique_id_aswner)
+                    except Exception as error:
+                        print(
+                            "Não foi possivel converter mensagem do servidor em formato JSON: Erro: ", error)
+                        mensagem_json = {}
+
+                    unique_id = unique_id_aswner_json
+                    resposta = lamp.processar_comando(
+                        comando, ip, dados, unique_id, user)
+                    print(resposta)
+                    clientsocket.send(resposta.encode('utf-8'))
+
             except Exception as error:
-                print(
-                    "Não foi possivel converter mensagem do servidor em formato JSON: Erro: ", error)
-                mensagem_json = {}
-
-            unique_id = unique_id_aswner_json
-            resposta = lamp.processar_comando(
-                comando, ip, dados, unique_id, user)
-            print(resposta)
-            clientsocket.send(resposta.encode('utf-8'))
-
-    except Exception as error:
-        print('Erro: ', error)
-        print("Erro na conexão com o cliente!!")
+                print('Erro: ', error)
+                print("Erro na conexão com o cliente!!")
+    except:
+        print(f"IPv4: {addr[0]} não permitido.")
 
 
-def verificar_e_criar_arquivo_csv():
-    """
-    Caso os arquivos fundamentais não existam, essa função auxiliar os criam com o cabeçalho
-    necessário para execução.
-    """
-    arquivo_csv = 'lamp.csv'
+def is_ip_in_range(ip_address, start_range, end_range):
+    ip_int = int(ip_address.replace('.', ''))
+    start_int = int(start_range.replace('.', ''))
+    end_int = int(end_range.replace('.', ''))
 
-    # checa se arquivo existe no diretorio atual
-    if not os.path.exists(arquivo_csv):
-        # caso não exista, ele é criado e tem cabeçalho adicionado para evitar errors com a função processar comando
-        with open(arquivo_csv, mode='w', newline='') as file:
-            fieldnames = ['unique_id', 'status',
-                          'current_config', 'ip']
-            writer = csv.DictWriter(file, fieldnames=fieldnames)
-            writer.writeheader()
+    return start_int <= ip_int <= end_int
 
 
 def main_lamp_server():
